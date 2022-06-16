@@ -1,0 +1,51 @@
+_BASE_: "../Base-DG.yml"
+
+META:
+  DATA:
+    MTRAIN_MINI_BATCH: 256 # should be a multiply of num_domain x num_instance
+    MTRAIN_NUM_INSTANCE: 4
+    MTEST_MINI_BATCH: 256 # should be a multiply of num_domain x num_instance
+    MTEST_NUM_INSTANCE: 4
+  SOLVER:
+    LR_FACTOR:
+      GATE: 10.0 
+    MTRAIN:
+      NUM_DOMAIN: 8 # number of mtrain domains
+  LOSS:
+    MTRAIN_NAME: ("TripletLoss_add","TripletLoss_mtrain","SCT",) 
+    MTEST_NAME: ("TripletLoss_mtest",)
+
+MODEL:
+  BACKBONE:
+    NAME: "build_resnet_backbone" # "build_resnet_backbone", "build_mobilenet_v2_backbone"
+    DEPTH: 50 # ResNet->18,34,50,101,152, Mobilenet->10,14
+    PRETRAIN: True
+    PRETRAIN_PATH: '' # 'pretrained/mobilenetv2_1.0.pth' or 'pretrained/mobilenetv2_1.4.pth' or ''
+  HEADS:
+    IN_FEAT: 2048 # ResNet(18,34) 512 , Resnet(50) 2048, Mobilenet w1.0 1280, w1.4 1792
+  LOSSES:
+    NAME: ("CrossEntropyLoss","TripletLoss",) 
+  NORM:
+    TYPE_BACKBONE: "BIN_gate2" # "BN", "IN", "BIN_half", "BIN_gate1" (original), "BIN_gate2" (MetaBIN)
+
+DATASETS:
+  NAMES: ("MSMT17",)
+#  NAMES: ("Market1501",) # "Market1501", "DukeMTMC", "MSMT17"
+  TESTS: ("ALL_GRID", "ALL_VIPER_only_10", "ALL_PRID", "ALL_iLIDS", ) 
+
+DATALOADER:
+  CAMERA_TO_DOMAIN: False # True when market (6), Duke (8), MSMT (15), False when DG
+  NUM_INSTANCE: 4
+
+SOLVER:
+  BASE_LR: 0.01
+  MAX_ITER: 100 
+  STEPS: [40, 70] 
+  IMS_PER_BATCH: 80 
+  WRITE_PERIOD: 1000
+  WRITE_PERIOD_BIN: 1000
+  CHECKPOINT_PERIOD: 2
+  CHECKPOINT_SAME_AS_EVAL: True
+
+TEST:
+  EVAL_PERIOD: 2
