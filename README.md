@@ -1,4 +1,4 @@
-## Meta Distribution Alignment for Generalizable Person Re-Identification (MDA), [[CVPR 2022](https://arxiv.org/abs/2011.14670)]
+## Meta Distribution Alignment for Generalizable Person Re-Identification (MDA)
 
 
 ---
