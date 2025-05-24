@@ -5,3 +5,5 @@ logs
 events.out.tfevents.*
 __pycache__/
 datasets
+*.so
+*.c
