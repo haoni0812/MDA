@@ -1,0 +1,6 @@
+*.pth
+*.json
+*.txt
+logs
+events.out.tfevents.*
+__pycache__/
