@@ -1,0 +1,401 @@
+[03/25 12:12:41] fastreid INFO: Rank of current process: 0. World size: 1
+[03/25 12:12:42] fastreid INFO: Environment info:
+----------------------  ----------------------------------------------------------------------------------------
+sys.platform            linux
+Python                  3.6.12 |Anaconda, Inc.| (default, Sep  8 2020, 23:10:56) [GCC 7.3.0]
+numpy                   1.19.2
+fastreid                0.1.0 @./fastreid
+FASTREID_ENV_MODULE     <not set>
+PyTorch                 1.10.2+cu102 @/home/nihao/anaconda3/envs/torch13/lib/python3.6/site-packages/torch
+PyTorch debug build     False
+GPU available           True
+GPU 0,1,2,3,4,5,6,7     NVIDIA GeForce GTX 1080 Ti
+CUDA_HOME               /usr/local/cuda
+Pillow                  8.0.1
+torchvision             0.11.2+cu102 @/home/nihao/anaconda3/envs/torch13/lib/python3.6/site-packages/torchvision
+torchvision arch flags  sm_35, sm_50, sm_60, sm_70, sm_75
+cv2                     4.5.1
+----------------------  ----------------------------------------------------------------------------------------
+PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.2.3 (Git Hash 7336ca9f055cf1bfa13efb658fe15dc9b41f0740)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 10.2
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70
+  - CuDNN 7.6.5
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=10.2, CUDNN_VERSION=7.6.5, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.10.2, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+[03/25 12:12:42] fastreid INFO: Command line arguments: Namespace(config_file='./configs/Sample/D-resnet.yml', dist_only=False, dist_url='tcp://127.0.0.1:50154', domain_only=False, eval_only=True, machine_rank=0, num_gpus=1, num_machines=1, num_pth=0, opts=['MODEL.DEVICE', 'cuda:0'], resume=True, tsne_only=False)
+[03/25 12:12:42] fastreid INFO: Contents of args.config_file=./configs/Sample/D-resnet.yml:
+_BASE_: "../Base-DG.yml"
+
+INPUT:
+  CJ:
+    ENABLED: True
+
+META:
+  DATA:
+    MTRAIN_MINI_BATCH: 96 # should be a multiply of num_domain x num_instance
+    MTRAIN_NUM_INSTANCE: 4
+    MTEST_MINI_BATCH: 96 # should be a multiply of num_domain x num_instance
+    MTEST_NUM_INSTANCE: 4
+  SOLVER:
+    LR_FACTOR:
+      GATE: 50.0 
+    MTRAIN:
+      NUM_DOMAIN: 4 # number of mtrain domains
+  LOSS:
+    MTRAIN_NAME: ("CrossEntropyLoss","TripletLoss_add","TripletLoss_mtrain","SCT",) 
+    MTEST_NAME: ("CrossEntropyLoss","TripletLoss_mtest",)
+
+MODEL:
+  BACKBONE:
+    NAME: "build_resnet_backbone" # "build_resnet_backbone", "build_mobilenet_v2_backbone"
+    DEPTH: 50 # ResNet->18,34,50,101,152, Mobilenet->10,14
+    PRETRAIN: True
+    PRETRAIN_PATH: '' # 'pretrained/mobilenetv2_1.0.pth' or 'pretrained/mobilenetv2_1.4.pth' or ''
+  HEADS:
+    IN_FEAT: 2048 # ResNet(18,34) 512 , Resnet(50) 2048, Mobilenet w1.0 1280, w1.4 1792
+  LOSSES:
+    NAME: ("CrossEntropyLoss","TripletLoss",) 
+  NORM:
+    TYPE_BACKBONE: "BIN_gate2" # "BN", "IN", "BIN_half", "BIN_gate1" (original), "BIN_gate2" (MetaBIN)
+
+DATASETS:
+  NAMES: ("Market1501",) 
+  # TESTS: ("Market1501", "DukeMTMC", "ALL_GRID", "ALL_VIPER_only_10", "ALL_PRID", "ALL_iLIDS")
+  TESTS: ("Market1501",)
+
+DATALOADER:
+  CAMERA_TO_DOMAIN: True # True when market (6), Duke (8), MSMT (15), False when DG
+  NUM_INSTANCE: 4
+
+SOLVER:
+  BASE_LR: 0.01
+  MAX_ITER: 120 
+  STEPS: [50, 90] 
+  IMS_PER_BATCH: 96 
+  WRITE_PERIOD: 200
+  WRITE_PERIOD_BIN: 200
+  CHECKPOINT_PERIOD: 2
+  CHECKPOINT_SAME_AS_EVAL: True
+
+TEST:
+  EVAL_PERIOD: 2
+  IMS_PER_BATCH: 200
+  REPORT_ALL: False
+
+[03/25 12:12:42] fastreid INFO: Running with full config:
+CUDNN_BENCHMARK: True
+DATALOADER:
+  CAMERA_TO_DOMAIN: True
+  DELETE_REM: False
+  DROP_LAST: True
+  INDIVIDUAL: False
+  NAIVE_WAY: True
+  NUM_INSTANCE: 4
+  NUM_WORKERS: 2
+DATASETS:
+  COMBINEALL: False
+  NAMES: ('Market1501',)
+  TESTS: ('Market1501',)
+INPUT:
+  CJ:
+    BRIGHTNESS: 0.15
+    CONTRAST: 0.15
+    ENABLED: True
+    HUE: 0.1
+    PROB: 1.0
+    SATURATION: 0.1
+  DO_AUGMIX: False
+  DO_AUTOAUG: False
+  DO_FLIP: True
+  DO_PAD: True
+  FLIP_PROB: 0.5
+  PADDING: 10
+  PADDING_MODE: constant
+  REA:
+    ENABLED: False
+    MEAN: [123.675, 116.28, 103.53]
+    PROB: 0.5
+  RPT:
+    ENABLED: False
+    PROB: 0.5
+  SIZE_TEST: [256, 128]
+  SIZE_TRAIN: [256, 128]
+META:
+  BOTTLENECK:
+    DO_IT: False
+    NORM: True
+    REDUCTION_DIM: 1024
+  DATA:
+    DELETE_REM: False
+    DROP_LAST: True
+    INDIVIDUAL: False
+    LOADER_FLAG: diff
+    MTEST_MINI_BATCH: 96
+    MTEST_NUM_INSTANCE: 4
+    MTRAIN_MINI_BATCH: 96
+    MTRAIN_NUM_INSTANCE: 4
+    NAIVE_WAY: False
+    NAMES: DG
+    NUM_DOMAINS: 5
+    RELABEL: False
+    SYNTH_FLAG: none
+    SYNTH_METHOD: real
+    SYNTH_SAME_SEED: False
+    WHOLE: True
+  LOSS:
+    COMBINED: False
+    MTEST_NAME: ('CrossEntropyLoss', 'TripletLoss_mtest')
+    MTRAIN_NAME: ('CrossEntropyLoss', 'TripletLoss_add', 'TripletLoss_mtrain', 'SCT')
+    WEIGHT: 1.0
+  MODEL:
+    ALL_PARAMS: False
+    META_COMPUTE_LAYER: ('backbone_bn_gate',)
+    META_UPDATE_LAYER: ('backbone_bn_gate',)
+  NEW_SOLVER:
+    MAIN_ZERO_GRAD: True
+    MOMENTUM_INIT_GRAD: 0.0
+    NORM_ZERO_GRAD: True
+  SOLVER:
+    AUTO_GRAD_OUTSIDE: True
+    CONSTANT_GRAD: 0.01
+    DETAIL_MODE: True
+    EARLY_SCALE: True
+    INIT:
+      FIRST_INNER_LOOP: 10
+      INNER_LOOP: 1
+      OUTER_LOOP: 1
+      TYPE_RUNNING_STATS: general
+    INNER_CLAMP: True
+    LR_FACTOR:
+      GATE: 50.0
+      GATE_CYCLIC_PERIOD_PER_EPOCH: 0.2
+      GATE_CYCLIC_RATIO: 10.0
+      META: 0.0
+      META_CYCLIC_MIDDLE_LR: 0.01
+      META_CYCLIC_NEW: True
+      META_CYCLIC_PERIOD_PER_EPOCH: 0.2
+      META_CYCLIC_RATIO: 10.0
+      META_CYCLIC_UP_RATIO: 0.5
+    MANUAL_MEMORY_EMPTY: True
+    MANUAL_SEED_DETERMINISTIC: True
+    MANUAL_SEED_FLAG: True
+    MANUAL_SEED_NUMBER: 2020
+    MANUAL_ZERO_GRAD: zero
+    MTEST:
+      ONLY_ONE_DOMAIN: False
+      TYPE_RUNNING_STATS: hold
+    MTRAIN:
+      ALLOW_UNUSED: False
+      BEFORE_ZERO_GRAD: True
+      FREEZE_GRAD_META: False
+      INNER_LOOP: 1
+      NUM_DOMAIN: 4
+      SECOND_ORDER: False
+      SHUFFLE_DOMAIN: True
+      TYPE_RUNNING_STATS: hold
+    ONE_LOSS_FOR_ITER: False
+    ONE_LOSS_ORDER: forward
+    PRINT_GRAD: True
+    RANDOM_SCALE_GRAD: 1.0
+    STOP_GRADIENT: True
+    SYNC: True
+    SYNTH_GRAD: none
+MODEL:
+  BACKBONE:
+    DEPTH: 50
+    LAST_STRIDE: 1
+    NAME: build_resnet_backbone
+    NORM_SPLIT: 1
+    NUM_BATCH_TRACKED: False
+    PRETRAIN: True
+    PRETRAIN_PATH: 
+    VOLUME: 800y
+    WITH_IBN: False
+    WITH_NL: False
+    WITH_SE: False
+  DEVICE: cuda:0
+  FREEZE_LAYERS: ['']
+  HEADS:
+    CLS_LAYER: linear
+    IN_FEAT: 2048
+    MARGIN: 0.15
+    NAME: MetalearningHead
+    NORM_SPLIT: 1
+    NUM_CLASSES: 0
+    POOL_LAYER: avgpool
+    REDUCTION_DIM: 512
+    SCALE: 128
+  LOSSES:
+    CE:
+      ALPHA: 0.2
+      EPSILON: 0.1
+      SCALE: 1.0
+    CIRCLE:
+      ALPHA: 128
+      FEAT_ORDER: before
+      MARGIN: 0.25
+      SCALE: 1.0
+    FL:
+      ALPHA: 0.25
+      GAMMA: 2
+      SCALE: 1.0
+    JSD:
+      FEAT_ORDER: before
+      NORM: False
+      SCALE: 1.0
+    MMD:
+      FEAT_ORDER: before
+      FIX_SIGMA: 0.0
+      KERNEL_MUL: 2.0
+      KERNEL_NUM: 5
+      NORM: True
+      NORM_FLAG: l2norm
+      SCALE: 1.0
+    NAME: ('CrossEntropyLoss', 'TripletLoss')
+    SCT:
+      FEAT_ORDER: before
+      NORM: True
+      SCALE: 1.0
+      TYPE: cosine_sim
+    STD:
+      FEAT_ORDER: before
+      LOG_SCALE: True
+      NORM: True
+      SCALE: 1.0
+      TYPE: domain
+    TRI:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: True
+      LOSS_TYPE: logistic
+      MARGIN: 0.3
+      NEW_NEG: [0, 1, 1]
+      NEW_POS: [1, 0, 0]
+      NORM_FEAT: False
+      SCALE: 1.0
+    TRI_ADD:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: True
+      LOSS_TYPE: logistic
+      MARGIN: 0.0
+      NEW_NEG: [0, 1, 0]
+      NEW_POS: [0, 0, 1]
+      NORM_FEAT: False
+      SCALE: 1.0
+    TRI_MTEST:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: True
+      LOSS_TYPE: logistic
+      MARGIN: 0.3
+      NEW_NEG: [0, 1, 1]
+      NEW_POS: [1, 0, 0]
+      NORM_FEAT: False
+      SCALE: 1.0
+    TRI_MTRAIN:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: True
+      LOSS_TYPE: logistic
+      MARGIN: 0.3
+      NEW_NEG: [0, 1, 1]
+      NEW_POS: [1, 0, 0]
+      NORM_FEAT: False
+      SCALE: 1.0
+  META_ARCHITECTURE: Metalearning
+  NORM:
+    BIN_INIT: one
+    BN_AFFINE: True
+    BN_B_FREEZE: False
+    BN_RUNNING: True
+    BN_W_FREEZE: False
+    EACH_DOMAIN_BASIC: False
+    EACH_DOMAIN_MTEST: False
+    EACH_DOMAIN_MTRAIN: False
+    IN_AFFINE: True
+    IN_B_FREEZE: False
+    IN_FC_MULTIPLY: 0.0
+    IN_RUNNING: False
+    IN_W_FREEZE: False
+    LOAD_BN_AFFINE: True
+    LOAD_BN_RUNNING: True
+    LOAD_IN_AFFINE: False
+    LOAD_IN_RUNNING: False
+    TYPE_BACKBONE: BIN_gate2
+    TYPE_BOTTLENECK: BN
+    TYPE_CLASSIFIER: BN
+  PIXEL_MEAN: [123.675, 116.28, 103.53]
+  PIXEL_STD: [58.395, 57.120000000000005, 57.375]
+  WEIGHTS: 
+OUTPUT_DIR: ./logs/Sample/D-resnet/nometa_and_mixstyle
+SOLVER:
+  AMP: True
+  BACKBONE_LR_FACTOR: 1.0
+  BASE_LR: 0.01
+  BIAS_LR_FACTOR: 2.0
+  CHECKPOINT_PERIOD: 2
+  CHECKPOINT_SAME_AS_EVAL: True
+  CYCLIC_MAX_LR: 0.01
+  CYCLIC_MIN_LR: 0.0001
+  CYCLIC_PERIOD_PER_EPOCH: 1.0
+  DELAY_ITERS: 0
+  ETA_MIN_LR: 7.7e-05
+  FREEZE_ITERS: 0
+  GAMMA: 0.1
+  HEADS_LR_FACTOR: 1.0
+  IMS_PER_BATCH: 96
+  MAX_ITER: 120
+  MOMENTUM: 0.9
+  MOMENTUM_NORM: 0.0
+  NORM_SCHEDULER: equal
+  OPT: SGD
+  OPT_NORM: SGD
+  SCHED: WarmupMultiStepLR
+  STEPS: [50, 90]
+  SWA:
+    ENABLED: False
+    ETA_MIN_LR: 3.5e-06
+    ITER: 10
+    LR_FACTOR: 10.0
+    LR_SCHED: False
+    PERIOD: 2
+  WARMUP_FACTOR: 0.01
+  WARMUP_ITERS: 10
+  WARMUP_METHOD: linear
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.0005
+  WEIGHT_DECAY_NORM: 0.0
+  WRITE_PERIOD: 200
+  WRITE_PERIOD_BIN: 200
+  WRITE_PERIOD_PARAM: 1000
+TEST:
+  AQE:
+    ALPHA: 3.0
+    ENABLED: False
+    QE_K: 5
+    QE_TIME: 1
+  EVAL_PERIOD: 2
+  IMS_PER_BATCH: 200
+  METRIC: cosine
+  PRECISE_BN:
+    DATASET: Market1501
+    ENABLED: False
+    NUM_ITER: 300
+  REPORT_ALL: False
+  RERANK:
+    ENABLED: False
+    K1: 20
+    K2: 6
+    LAMBDA: 0.3
+[03/25 12:12:42] fastreid INFO: Full config saved to /home/nihao/MDA/logs/Sample/D-resnet/nometa_and_mixstyle/config.yaml
+[03/25 12:12:42] fastreid.trainer INFO: Using a generated random seed 2020

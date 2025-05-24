@@ -1,0 +1,357 @@
+CUDNN_BENCHMARK: true
+DATALOADER:
+  CAMERA_TO_DOMAIN: true
+  DELETE_REM: false
+  DROP_LAST: true
+  INDIVIDUAL: false
+  NAIVE_WAY: true
+  NUM_INSTANCE: 3
+  NUM_WORKERS: 2
+DATASETS:
+  COMBINEALL: false
+  NAMES:
+  - Market1501
+  TESTS:
+  - DukeMTMC
+INPUT:
+  CJ:
+    BRIGHTNESS: 0.15
+    CONTRAST: 0.15
+    ENABLED: true
+    HUE: 0.1
+    PROB: 1.0
+    SATURATION: 0.1
+  DO_AUGMIX: false
+  DO_AUTOAUG: false
+  DO_FLIP: true
+  DO_PAD: true
+  FLIP_PROB: 0.5
+  PADDING: 10
+  PADDING_MODE: constant
+  REA:
+    ENABLED: false
+    MEAN:
+    - 123.675
+    - 116.28
+    - 103.53
+    PROB: 0.5
+  RPT:
+    ENABLED: false
+    PROB: 0.5
+  SIZE_TEST:
+  - 256
+  - 128
+  SIZE_TRAIN:
+  - 256
+  - 128
+META:
+  BOTTLENECK:
+    DO_IT: false
+    NORM: true
+    REDUCTION_DIM: 1024
+  DATA:
+    DELETE_REM: false
+    DROP_LAST: true
+    INDIVIDUAL: false
+    LOADER_FLAG: diff
+    MTEST_MINI_BATCH: 96
+    MTEST_NUM_INSTANCE: 4
+    MTRAIN_MINI_BATCH: 96
+    MTRAIN_NUM_INSTANCE: 4
+    NAIVE_WAY: false
+    NAMES: ''
+    NUM_DOMAINS: 5
+    RELABEL: false
+    SYNTH_FLAG: none
+    SYNTH_METHOD: real
+    SYNTH_SAME_SEED: false
+    WHOLE: true
+  LOSS:
+    COMBINED: false
+    MTEST_NAME:
+    - CrossEntropyLoss
+    - TripletLoss_mtest
+    MTRAIN_NAME:
+    - CrossEntropyLoss
+    - TripletLoss_add
+    - TripletLoss_mtrain
+    - SCT
+    WEIGHT: 1.0
+  MODEL:
+    ALL_PARAMS: false
+    META_COMPUTE_LAYER:
+    - backbone_bn_gate
+    META_UPDATE_LAYER:
+    - backbone_bn_gate
+  NEW_SOLVER:
+    MAIN_ZERO_GRAD: true
+    MOMENTUM_INIT_GRAD: 0.0
+    NORM_ZERO_GRAD: true
+  SOLVER:
+    AUTO_GRAD_OUTSIDE: true
+    CONSTANT_GRAD: 0.01
+    DETAIL_MODE: true
+    EARLY_SCALE: true
+    INIT:
+      FIRST_INNER_LOOP: 10
+      INNER_LOOP: 1
+      OUTER_LOOP: 1
+      TYPE_RUNNING_STATS: general
+    INNER_CLAMP: true
+    LR_FACTOR:
+      GATE: 20.0
+      GATE_CYCLIC_PERIOD_PER_EPOCH: 0.2
+      GATE_CYCLIC_RATIO: 10.0
+      META: 0.0
+      META_CYCLIC_MIDDLE_LR: 0.01
+      META_CYCLIC_NEW: true
+      META_CYCLIC_PERIOD_PER_EPOCH: 0.2
+      META_CYCLIC_RATIO: 10.0
+      META_CYCLIC_UP_RATIO: 0.5
+    MANUAL_MEMORY_EMPTY: true
+    MANUAL_SEED_DETERMINISTIC: true
+    MANUAL_SEED_FLAG: true
+    MANUAL_SEED_NUMBER: 2020
+    MANUAL_ZERO_GRAD: zero
+    MTEST:
+      ONLY_ONE_DOMAIN: false
+      TYPE_RUNNING_STATS: hold
+    MTRAIN:
+      ALLOW_UNUSED: false
+      BEFORE_ZERO_GRAD: true
+      FREEZE_GRAD_META: false
+      INNER_LOOP: 1
+      NUM_DOMAIN: 3
+      SECOND_ORDER: false
+      SHUFFLE_DOMAIN: true
+      TYPE_RUNNING_STATS: hold
+    ONE_LOSS_FOR_ITER: false
+    ONE_LOSS_ORDER: forward
+    PRINT_GRAD: true
+    RANDOM_SCALE_GRAD: 1.0
+    STOP_GRADIENT: true
+    SYNC: true
+    SYNTH_GRAD: none
+MODEL:
+  BACKBONE:
+    DEPTH: 50
+    LAST_STRIDE: 1
+    NAME: build_resnet_backbone
+    NORM_SPLIT: 1
+    NUM_BATCH_TRACKED: false
+    PRETRAIN: true
+    PRETRAIN_PATH: ''
+    VOLUME: 800y
+    WITH_IBN: false
+    WITH_NL: false
+    WITH_SE: false
+  DEVICE: cuda:0
+  FREEZE_LAYERS:
+  - ''
+  HEADS:
+    CLS_LAYER: linear
+    IN_FEAT: 2048
+    MARGIN: 0.15
+    NAME: MetalearningHead
+    NORM_SPLIT: 1
+    NUM_CLASSES: 0
+    POOL_LAYER: avgpool
+    REDUCTION_DIM: 512
+    SCALE: 128
+  LOSSES:
+    CE:
+      ALPHA: 0.2
+      EPSILON: 0.1
+      SCALE: 1.0
+    CIRCLE:
+      ALPHA: 128
+      FEAT_ORDER: before
+      MARGIN: 0.25
+      SCALE: 1.0
+    FL:
+      ALPHA: 0.25
+      GAMMA: 2
+      SCALE: 1.0
+    JSD:
+      FEAT_ORDER: before
+      NORM: false
+      SCALE: 1.0
+    MMD:
+      FEAT_ORDER: before
+      FIX_SIGMA: 0.0
+      KERNEL_MUL: 2.0
+      KERNEL_NUM: 5
+      NORM: true
+      NORM_FLAG: l2norm
+      SCALE: 1.0
+    NAME:
+    - CrossEntropyLoss
+    - TripletLoss
+    SCT:
+      FEAT_ORDER: before
+      NORM: true
+      SCALE: 1.0
+      TYPE: cosine_sim
+    STD:
+      FEAT_ORDER: before
+      LOG_SCALE: true
+      NORM: true
+      SCALE: 1.0
+      TYPE: domain
+    TRI:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: true
+      LOSS_TYPE: logistic
+      MARGIN: 0.3
+      NEW_NEG:
+      - 0
+      - 1
+      - 1
+      NEW_POS:
+      - 1
+      - 0
+      - 0
+      NORM_FEAT: false
+      SCALE: 1.0
+    TRI_ADD:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: true
+      LOSS_TYPE: logistic
+      MARGIN: 0.0
+      NEW_NEG:
+      - 0
+      - 1
+      - 0
+      NEW_POS:
+      - 0
+      - 0
+      - 1
+      NORM_FEAT: false
+      SCALE: 1.0
+    TRI_MTEST:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: true
+      LOSS_TYPE: logistic
+      MARGIN: 0.3
+      NEW_NEG:
+      - 0
+      - 1
+      - 1
+      NEW_POS:
+      - 1
+      - 0
+      - 0
+      NORM_FEAT: false
+      SCALE: 1.0
+    TRI_MTRAIN:
+      DIST_TYPE: euclidean
+      FEAT_ORDER: before
+      HARD_MINING: true
+      LOSS_TYPE: logistic
+      MARGIN: 0.3
+      NEW_NEG:
+      - 0
+      - 1
+      - 1
+      NEW_POS:
+      - 1
+      - 0
+      - 0
+      NORM_FEAT: false
+      SCALE: 1.0
+  META_ARCHITECTURE: Metalearning
+  NORM:
+    BIN_INIT: one
+    BN_AFFINE: true
+    BN_B_FREEZE: false
+    BN_RUNNING: true
+    BN_W_FREEZE: false
+    EACH_DOMAIN_BASIC: false
+    EACH_DOMAIN_MTEST: false
+    EACH_DOMAIN_MTRAIN: false
+    IN_AFFINE: true
+    IN_B_FREEZE: false
+    IN_FC_MULTIPLY: 0.0
+    IN_RUNNING: false
+    IN_W_FREEZE: false
+    LOAD_BN_AFFINE: true
+    LOAD_BN_RUNNING: true
+    LOAD_IN_AFFINE: false
+    LOAD_IN_RUNNING: false
+    TYPE_BACKBONE: BIN_gate2
+    TYPE_BOTTLENECK: BN
+    TYPE_CLASSIFIER: BN
+  PIXEL_MEAN:
+  - 123.675
+  - 116.28
+  - 103.53
+  PIXEL_STD:
+  - 58.395
+  - 57.120000000000005
+  - 57.375
+  WEIGHTS: ''
+OUTPUT_DIR: ./logs/Sample/M-resnet/F_nor
+SOLVER:
+  AMP: true
+  BACKBONE_LR_FACTOR: 1.0
+  BASE_LR: 0.01
+  BIAS_LR_FACTOR: 2.0
+  CHECKPOINT_PERIOD: 2
+  CHECKPOINT_SAME_AS_EVAL: true
+  CYCLIC_MAX_LR: 0.01
+  CYCLIC_MIN_LR: 0.0001
+  CYCLIC_PERIOD_PER_EPOCH: 1.0
+  DELAY_ITERS: 0
+  ETA_MIN_LR: 7.7e-05
+  FREEZE_ITERS: 0
+  GAMMA: 0.1
+  HEADS_LR_FACTOR: 1.0
+  IMS_PER_BATCH: 96
+  MAX_ITER: 120
+  MOMENTUM: 0.9
+  MOMENTUM_NORM: 0.0
+  NORM_SCHEDULER: equal
+  OPT: SGD
+  OPT_NORM: SGD
+  SCHED: WarmupMultiStepLR
+  STEPS:
+  - 50
+  - 90
+  SWA:
+    ENABLED: false
+    ETA_MIN_LR: 3.5e-06
+    ITER: 10
+    LR_FACTOR: 10.0
+    LR_SCHED: false
+    PERIOD: 2
+  WARMUP_FACTOR: 0.01
+  WARMUP_ITERS: 10
+  WARMUP_METHOD: linear
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.0005
+  WEIGHT_DECAY_NORM: 0.0
+  WRITE_PERIOD: 200
+  WRITE_PERIOD_BIN: 200
+  WRITE_PERIOD_PARAM: 1000
+TEST:
+  AQE:
+    ALPHA: 3.0
+    ENABLED: false
+    QE_K: 5
+    QE_TIME: 1
+  EVAL_PERIOD: 2
+  IMS_PER_BATCH: 200
+  METRIC: cosine
+  PRECISE_BN:
+    DATASET: Market1501
+    ENABLED: false
+    NUM_ITER: 300
+  REPORT_ALL: false
+  RERANK:
+    ENABLED: false
+    K1: 20
+    K2: 6
+    LAMBDA: 0.3

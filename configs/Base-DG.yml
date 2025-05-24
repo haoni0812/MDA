@@ -1,0 +1,171 @@
+INPUT:
+  SIZE_TRAIN: [256, 128] 
+  SIZE_TEST: [256, 128] 
+  DO_AUTOAUG: False
+  CJ:
+    ENABLED: False
+  DO_AUGMIX: False
+  RPT:
+    ENABLED: False
+  REA:
+    ENABLED: False
+
+META:
+  DATA:
+    NAMES: "DG" # 'DG', ''
+
+    MTRAIN_MINI_BATCH: 80 # should be a multiply of num_domain x num_instance
+    MTRAIN_NUM_INSTANCE: 4
+    MTEST_MINI_BATCH: 80 # should be a multiply of num_domain x num_instance
+    MTEST_NUM_INSTANCE: 4
+
+  MODEL:
+    META_COMPUTE_LAYER: ('backbone_bn_gate',) # ("",) when MLDG
+    META_UPDATE_LAYER: ('backbone_bn_gate',) # ("",) when MLDG
+    ALL_PARAMS: False # True when MLDG
+
+  SOLVER:
+    LR_FACTOR:
+      GATE: 10.0 # learning ratio of balancing paramter (10-> baselr x 10)
+      META: 0.0 # cyclic inner updates when 0.0
+      META_CYCLIC_RATIO: 10.0 # [middle_lr / ratio, middle_lr x ratio]
+      META_CYCLIC_PERIOD_PER_EPOCH: 0.2 # period per epoch
+      META_CYCLIC_UP_RATIO: 0.5 # 1 means only up, 0 means only down
+      META_CYCLIC_MIDDLE_LR: 0.01 # middle lr 
+      META_CYCLIC_NEW: True # always true
+
+    INIT:
+      FIRST_INNER_LOOP: 10 # for training stability
+      INNER_LOOP: 1 # basic model update
+      OUTER_LOOP: 1 # meta-learning
+      TYPE_RUNNING_STATS: "general" # "general", "hold", "eval"
+      # general-> w,b is trained, running_stats are updated
+      # hold-> w,b is trained, running_stats are stopped
+      # eval-> w,b is not trained, running_stats are applied
+
+    MTRAIN:
+      SECOND_ORDER: False # second_order (need to change 'stop_gradient' as false)
+      NUM_DOMAIN: 3 # number of mtrain domains
+      TYPE_RUNNING_STATS: "hold" # "general", "hold", "eval"
+
+    MTEST:
+      ONLY_ONE_DOMAIN: False # True-> only use one domain in meta-test
+      TYPE_RUNNING_STATS: "hold" # "general", "hold", "eval"
+
+    STOP_GRADIENT: True # for second order
+
+  LOSS:
+    COMBINED: False # True when MLDG
+    WEIGHT: 1.0 # w * MTRAIN + MTEST (when combined)
+    MTRAIN_NAME: ("TripletLoss_add","TripletLoss_mtrain","SCT",) 
+    MTEST_NAME: ("TripletLoss_mtest",)
+
+MODEL:
+  META_ARCHITECTURE: "Metalearning"
+  DEVICE: "cuda:6"
+  BACKBONE:
+    NAME: "build_mobilenet_v2_backbone" # "build_resnet_backbone", "build_mobilenet_v2_backbone"
+    DEPTH: 14 # ResNet->18,34,50,101,152, Mobilenet->10,14
+    PRETRAIN: True
+    PRETRAIN_PATH: 'pretrained/mobilenetv2_1.4.pth' # 'pretrained/mobilenetv2_1.0.pth' or 'pretrained/mobilenetv2_1.4.pth' or ''
+  HEADS:
+    IN_FEAT: 1792 # ResNet(18,34) 512 , Resnet(50) 2048, Mobilenet w1.0 1280, w1.4 1792
+    NAME: "MetalearningHead"
+    POOL_LAYER: "avgpool" # 'fastavgpool', 'avgpool', 'maxpool', 'gempoolP', 'gempool', 'avgmaxpool', 'clipavgpool', 'identity'
+    CLS_LAYER: "linear" # 'linear', 'arcSoftmax(x)', 'circleSoftmax', 'amSoftmax(poor)'
+  LOSSES:
+    CE:
+      EPSILON: 0.1 # 0, 0.1
+    TRI:
+      HARD_MINING: True
+      MARGIN: 0.3
+      FEAT_ORDER: 'before'
+    TRI_ADD:
+      SCALE: 1.0
+      HARD_MINING: True
+      MARGIN: 0.0
+      NORM_FEAT: False
+      NEW_POS: [ 0,0,1 ]
+      NEW_NEG: [ 0,1,0 ]
+      FEAT_ORDER: 'before'
+    TRI_MTRAIN:
+      SCALE: 1.0
+      HARD_MINING: True
+      MARGIN: 0.3
+      NORM_FEAT: False
+      NEW_POS: [ 1,0,0 ]
+      NEW_NEG: [ 0,1,1 ]
+      FEAT_ORDER: 'before'
+    TRI_MTEST:
+      HARD_MINING: True
+      MARGIN: 0.3
+      NORM_FEAT: False
+      NEW_POS: [ 1,0,0 ]
+      NEW_NEG: [ 0,1,1 ]
+      FEAT_ORDER: 'before'
+    SCT:
+      SCALE: 1.0
+      NORM: True
+      FEAT_ORDER: 'before'
+      TYPE: 'cosine_sim' # 'cosine', 'euclidean'
+    NAME: ("CrossEntropyLoss","TripletLoss",) 
+  NORM:
+    BN_AFFINE: True # learn w,b (required)
+    BN_RUNNING: True # apply running mean, var (required)
+    IN_AFFINE: True # learn w,b (optional)
+    IN_RUNNING: False # apply running mean, var (optional)
+    BIN_INIT: 'one' # 'random', 'one', 'zero', 'half' (optional)
+    IN_FC_MULTIPLY: 0.0 # applied when "IN" in fc
+
+    LOAD_BN_AFFINE: True 
+    LOAD_BN_RUNNING: True 
+    LOAD_IN_AFFINE: False
+    LOAD_IN_RUNNING: False
+
+    TYPE_BACKBONE: "BIN_gate2" # "BN", "IN", "BIN_half", "BIN_gate1" (original), "BIN_gate2" (MetaBIN)
+    TYPE_BOTTLENECK: "BN" 
+    TYPE_CLASSIFIER: "BN" 
+
+DATASETS:
+  NAMES: ("DG_CUHK02", "DG_CUHK03_detected", "DG_Market1501", "DG_DukeMTMC", "DG_CUHK_SYSU",)
+#  NAMES: ("Market1501",) # "Market1501", "DukeMTMC", "MSMT17"
+  TESTS: ("ALL_GRID", "ALL_VIPER_only_10", "ALL_PRID", "ALL_iLIDS", ) 
+
+
+DATALOADER:
+  CAMERA_TO_DOMAIN: False # True when market (6), Duke (8), MSMT (15), False when DG
+  NUM_INSTANCE: 4
+  NUM_WORKERS: 2
+  NAIVE_WAY: True # True-> random, False-> same domain
+  DELETE_REM: False 
+
+SOLVER:
+  AMP: True
+  OPT: "SGD" 
+  OPT_NORM: "SGD" 
+  MOMENTUM: 0.9
+  MOMENTUM_NORM: 0.0 
+
+  NORM_SCHEDULER: 'equal' # 'same', 'no_warm', 'equal', 'cyclic'
+  BASE_LR: 0.01
+
+  MAX_ITER: 20 
+  STEPS: [40, 70] 
+
+  WARMUP_FACTOR: 0.01
+  WARMUP_ITERS: 10
+
+  IMS_PER_BATCH: 80 
+  WEIGHT_DECAY: 0.0005
+  WEIGHT_DECAY_BIAS: 0.0005
+  WEIGHT_DECAY_NORM: 0.0 
+  WRITE_PERIOD: 1000
+  WRITE_PERIOD_BIN: 1000
+
+  CHECKPOINT_PERIOD: 2
+  CHECKPOINT_SAME_AS_EVAL: True
+
+TEST:
+  EVAL_PERIOD: 2
+  IMS_PER_BATCH: 200
+  REPORT_ALL: False
