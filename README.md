@@ -3,7 +3,7 @@
 This is the official implementation of our paper:
 
 **CFReID: Continual Few-shot Person Re-Identification**  
-Haoran Ni, Jingkuan Song, et al.  
+Hao Ni, Jingkuan Song, et al.  
 [[arXiv](https://arxiv.org/abs/2503.18469)]
 
 This work is an extension of our CVPR 2022 paper:  
@@ -87,14 +87,14 @@ If you find our work useful, please cite:
 ```bibtex
 @article{ni2024cfreid,
   title={CFReID: Continual Few-shot Person Re-Identification},
-  author={Ni, Haoran and Song, Jingkuan and others},
+  author={Ni, Hao and Song, Jingkuan and others},
   journal={arXiv preprint arXiv:2503.18469},
   year={2024}
 }
 
 @inproceedings{ni2022meta,
   title={Meta Distribution Alignment for Generalizable Person Re-Identification},
-  author={Ni, Haoran and Song, Jingkuan and others},
+  author={Ni, Hao and Song, Jingkuan and others},
   booktitle={CVPR},
   year={2022}
 }
